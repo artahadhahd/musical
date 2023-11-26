@@ -1,0 +1,13 @@
+4 / 4
+bpm: 60
+
+@main
+
+A 1
+C 2
+octave: 2
+goto repeat_forever
+
+@repeat_forever
+A 1; B 3
+goto repeat_forever
