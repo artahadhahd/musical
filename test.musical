@@ -1,11 +1,29 @@
 meter: 4 / 4
-bpm: 60
-pitch: 440
+bpm: 120
+pitch: 430
+volume: 100
 
 @main
-E 1
-E 1/2
-F 1/2
-G 1
-
+goto amogus
+goto amogus
 save main.bin
+
+@amogus
+volume: 100
+octave: 3
+C   1/2
+D#  1/2
+bpm: 60
+F   1/2
+F#  1/2
+F   1/2
+D#  1/2
+C   1
+bpm: 80
+octave: 4
+A#  1/4
+octave: 5
+D   1/4
+C   1/4
+volume: 0
+D   1
