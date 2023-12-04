@@ -21,22 +21,50 @@ def clamp_volume(volume):
         volume = 1
     return volume
 
+class Percentage:
+    def __init__(self: int, p) -> float:
+        self.p = p
+    
+    def of(self, other):
+        return self.p / 100 * other
+
+def adsr(input_: int, a: Percentage, d: Percentage, s: Percentage, r: Percentage, duration: float, samplerate=48e3):
+    stage = a.of(samplerate)
+    offset = 5000
+    if input_ < stage * duration:
+        return input_ / offset
+    stage += d.of(samplerate)
+    last = 0
+    if input_ < stage:
+        input_ = samplerate - input_
+        last = input_
+        return input_ / (offset * 10)
+    stage += s.of(samplerate)
+    if input_ < stage:
+        return last
+    stage += r.of(samplerate)
+    if input_ <= stage:
+        input_ = samplerate - input_
+        return input_ / (offset * 4)
+    raise RuntimeError(f'samplerate too much {input_}')
+
+
 def wave(duration, frequency, volume, samplerate=48e3):
     hz = (frequency * 2 * pi) / samplerate
-    # volume /= 100
-    # return [volume * sin(i * hz) for i in range(int(samplerate * duration))]
+    volume /= 100
+    return [volume * sin(i * hz) for i in range(int(samplerate * duration))]
     out = []
-    def estimate_ADSR(v: int) -> int:
-        if v < (samplerate * duration) / (10 * duration):
-            v /= volume * 100
-        elif v > (samplerate * duration) / (90 * duration):
-            v = samplerate - v
-            v = v / samplerate * duration
-        else:
-            v = volume / 100
-        return v
+    # def estimate_ADSR(v: int) -> int:
+    #     # if amplitude is below one / upto of the whole wave
+    #     upto = 2
+    #     if v < samplerate * duration / upto:
+    #         return v / 100000
+    #     v = samplerate * duration - v
+    #     return v / 100000
+
     for i in range(int(samplerate * duration)):
-        v = estimate_ADSR(i % samplerate)
+        # v = estimate_ADSR(i % (samplerate * duration))
+        v = adsr(i, Percentage(10), Percentage(20), Percentage(40), Percentage(30), duration, samplerate * duration)
         out.append(v * sin(i * hz))
     return out
 
@@ -63,10 +91,6 @@ def run():
             else:
                 previous = wave(bpm, n, 0.5)
                 sound.extend(previous)
-    # left = wave(0.5, 1, 1)
-    # sound.extend(left)
-    # right = wave(0.5, 1, 1)
-    # sound.extend(join_waves(left, right))
     out = 'hello.bin'
     with open(out, 'wb') as output:
         audio = array('d', sound)
@@ -89,21 +113,23 @@ modtoint = {
     NoteModifier.SHARP : 1,
 }
 
+def note_from(note_: Note, hz: int, octave: int, base_octave: int = 4):
+    distance = octave - base_octave
+    if distance >= 0:
+        new_octave = hz * distance * 2 or hz
+    else:
+        new_octave = hz / (distance * 2)
+    return note(new_octave, to_order[note_.name] + modtoint[note_.modifier])
+
 class AudioSystem:
     def __init__(self, header: Header):
         self.meta: Header = header
         self.sounds: List[float] = []
 
     def add_sound(self, note_: Note):
-        a_base = 4
-        distance = self.meta.octave - a_base
-        if distance >= 0:
-            new_octave = self.meta.pitch * distance * 2 or self.meta.pitch
-        else:
-            new_octave = self.meta.pitch / (distance * 2)
-        new_note = note(new_octave, to_order[note_.name] + modtoint[note_.modifier])
-        self.sounds.extend(wave(note_.duration, new_note, self.meta.volume))
-    
+        new_note = note_from(note_, self.meta.pitch, self.meta.octave)
+        self.sounds.extend(wave(note_.duration / (self.meta.bpm / 60), new_note, self.meta.volume))
+        
     def update_headers(self, header: Header):
         self.meta = header
         
