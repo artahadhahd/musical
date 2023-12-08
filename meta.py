@@ -1,3 +1,4 @@
+#### IGNORE THIS FILE
 with open(__file__, 'w') as file:
     file.write(
 """
