@@ -1,25 +1,30 @@
-from math import sin, pi
+from math import sin, tau
 from array import array
 from blocks import Note, NoteModifier, Header
-from typing import List
+from typing import List, Iterable
 
-def note(start, step):
+
+def note(start: float, step: int) -> float:
+    """
+    Returns a note `step` semitones away from `start`.
+    So if start is `C`, and step is `1`, the output
+    would be C# (C sharp). Similarly, if step is `-1`,
+    then it would be a B (or a Cb [C flat] which is a same as
+    a B)
+    """
     return start * (2 ** (step / 12))
 
-def scale(start):
+def major_scale(start):
+    # These are the semitones that have to go up for a major scale
+    # You can create any kind of scale by modifying these values
     progress = 0, 2, 2, 1, 2, 2, 2, 1
     idx = 0
     for i in progress:
         idx += i
         yield note(start, idx)
 
-def clamp_volume(volume):
-    if volume < 0:
-        volume = 0
-    if volume > 1:
-        volume = 1
-    return volume
 
+# IGNORE
 class Percentage:
     def __init__(self: int, p) -> float:
         self.p = p
@@ -27,6 +32,7 @@ class Percentage:
     def of(self, other):
         return self.p / 100 * other
 
+# IGNORE, i will use it later but i don't wanna remove it
 def adsr(input_: int, a: Percentage, d: Percentage, s: Percentage, r: Percentage, duration: float, samplerate=48e3):
     stage = a.of(samplerate)
     offset = 5000
@@ -49,7 +55,7 @@ def adsr(input_: int, a: Percentage, d: Percentage, s: Percentage, r: Percentage
 
 
 def wave(duration, frequency, volume, samplerate=48e3):
-    hz = (frequency * 2 * pi) / samplerate
+    hz = (frequency * tau) / samplerate
     volume /= 100
     return [volume * sin(i * hz) for i in range(int(samplerate * duration))]
     out = []
@@ -67,10 +73,8 @@ def wave(duration, frequency, volume, samplerate=48e3):
         out.append(v * sin(i * hz))
     return out
 
-second = 48_000
-
-def reverse_wave(n):
-    return [*map(lambda x: x * -1, n)]
+def reverse_wave(n: Iterable[float]):
+    return [-x for x in n]
 
 
 def join_waves(left, right):
@@ -78,24 +82,6 @@ def join_waves(left, right):
         return reverse_wave(right)
     return right
 
-def run():
-    sound = []
-    previous = None
-    notes = 261.626,
-    bpm = 60/60
-    for note_ in notes:
-        for n in scale(note_):
-            if previous:
-                sound.extend(join_waves(previous, wave(bpm * 0.5, n, 1)))
-            else:
-                previous = wave(bpm, n, 0.5)
-                sound.extend(previous)
-    out = 'hello.bin'
-    with open(out, 'wb') as output:
-        audio = array('d', sound)
-        audio.tofile(output)
-
-# nuh huh
 to_order = {
     'A' : 0,
     'B' : 2,
@@ -114,10 +100,7 @@ modtoint = {
 
 def note_from(note_: Note, hz: int, octave: int, base_octave: int = 4):
     distance = octave - base_octave
-    if distance >= 0:
-        new_octave = hz * distance * 2 or hz
-    else:
-        new_octave = hz / (distance * 2)
+    new_octave = hz * distance * 2 or hz if distance >= 0 else hz / (distance * 2)
     return note(new_octave, to_order[note_.name] + modtoint[note_.modifier])
 
 class AudioSystem:
