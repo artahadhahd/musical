@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Tuple
-from enum import IntEnum, Enum, auto
+from enum import Enum, auto
 
 @dataclass
 class Chunk:

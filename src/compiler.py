@@ -1,7 +1,6 @@
 from typing import Tuple, Generator, Any
-from dataclasses import dataclass
 from string import ascii_letters
-from blocks import *
+from blocks import Variable, Chunk, Header, Pair, Note, NoteModifier
 from math import log2
 import audio
 
@@ -15,7 +14,7 @@ class Interpreter:
         self.header: Header = header
         self.chunks: Tuple[Chunk] = chunks
         self._chunk_pool: dict[str, Chunk] = {}
-        self.variable_pool: dict[str, Variable] = {}
+        self.variable_pool: dict[str, Variable[int]] = {}
         self.setup()
         self.current_chunk = self._chunk_pool['main']
         self.audio_system = audio.AudioSystem(header)
@@ -69,7 +68,7 @@ class Interpreter:
             case _:
                 raise self.Error(f'Invalid pair {pair}')
     
-    def update_variable_pool(self, var: Variable):
+    def update_variable_pool(self, var: Variable[int]):
         match var.name:
             case 'octave' | 'bpm' | 'pitch' | 'volume' | 'meter':
                 # getattr(self.header, var.name) = var.value

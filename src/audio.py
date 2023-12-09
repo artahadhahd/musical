@@ -1,7 +1,6 @@
 from math import sin, pi
 from array import array
-from dataclasses import dataclass
-from blocks import *
+from blocks import Note, NoteModifier, Header
 from typing import List
 
 def note(start, step):
