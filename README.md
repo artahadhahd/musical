@@ -1,5 +1,13 @@
 # Instructions to Download
 
+## Via GitHub
+Scroll up, click on `Code` and select `Download ZIP`.
+Unzip the file, and you're good to go!
+
+You can now skip to [the instructions](#instructions-for-using-musical).
+
+
+## Via Git
 - Download Git from [here](https://git-scm.com/downloads)
 - Open a terminal and run the following command:
 ```
